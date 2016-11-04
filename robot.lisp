@@ -45,16 +45,18 @@
 
 (defun draw-map (map1)
   (let ((map1-completo (map-complete map1)))
-    (let ((height (* *tam-y* *square*))
-	  (width  (* *tam-x* *square*)))
+    (let* ((height (* *tam-y* *square*))
+	   (width  (* *tam-x* *square*))
+	   (x-init (random width))
+	   (y-init (random height)))
       (let ((result (make-8-bit-rgb-image height width)))
 	(loop
-	   for i from 0 to (- height 1)
+	   for i below height
 	   collect
 	     (loop
-		for j from 0 to (- width 1)
+		for j below width 
 		do (setf (pixel* result i j) (rgb->list (matrix->pixel map1-completo i j))) ))
-	(draw-circle* result 150 150 30 '(0 0 0))
+	(fill-circle* result y-init x-init 30 '(0 0 0))
 	(write-jpeg-file "maps/map.jpeg" result)
 	))
     ))
