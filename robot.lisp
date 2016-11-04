@@ -1,6 +1,8 @@
 ;;Artificial Intelligence for Robotics
 ;;Robotics Group - LINA - UFU
 
+;;File: robot.lisp
+
 (ql:quickload 'opticl)
 
 (defpackage "ROBOT"
@@ -18,10 +20,10 @@
    (limite-x :accessor lim-x :initarg :x)
    (limite-y :accessor lim-y :initarg :y)))
 
-(defvar azul     (make-instance 'rgb :r 0   :g 0   :b 128))
-(defvar amarelo  (make-instance 'rgb :r 255 :g 255 :b 0))
-(defvar verde    (make-instance 'rgb :r 0   :g 100 :b 0))
-(defvar vermelho (make-instance 'rgb :r 139 :g 0   :b 0))
+(defparameter azul     (make-instance 'rgb :r 0   :g 0   :b 128))
+(defparameter amarelo  (make-instance 'rgb :r 255 :g 255 :b 0))
+(defparameter verde    (make-instance 'rgb :r 0   :g 100 :b 0))
+(defparameter vermelho (make-instance 'rgb :r 139 :g 0   :b 0))
 
 (defvar *tam-y*  4)
 (defvar *tam-x*  4)
