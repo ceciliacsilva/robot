@@ -18,30 +18,66 @@
    (limite-x :accessor lim-x :initarg :x)
    (limite-y :accessor lim-y :initarg :y)))
 
-(defparameter azul     (make-instance 'rgb :r 0   :g 0   :b 128))
-(defparameter amarelo  (make-instance 'rgb :r 255 :g 255 :b 0))
-(defparameter verde    (make-instance 'rgb :r 0   :g 100 :b 0))
-(defparameter vermelho (make-instance 'rgb :r 139 :g 0   :b 0))
+(defvar azul     (make-instance 'rgb :r 0   :g 0   :b 128))
+(defvar amarelo  (make-instance 'rgb :r 255 :g 255 :b 0))
+(defvar verde    (make-instance 'rgb :r 0   :g 100 :b 0))
+(defvar vermelho (make-instance 'rgb :r 139 :g 0   :b 0))
 
 (defvar *tam-y*  4)
 (defvar *tam-x*  4)
 (defvar *square* 100)
 (defvar *map1*
-  (make-array (list *tam-y* *tam-x*)
-	      :initial-contents
-	      '((vermelho verde azul amarelo)
-		(amarelo amarelo verde azul)
-		(verde vermelho amarelo azul)
-		(azul verde vermelho azul))))
+  (list (list vermelho verde azul amarelo)
+	(list amarelo amarelo verde azul)
+	(list verde vermelho amarelo verde)
+	(list azul verde vermelho azul)))
 
 (defun map-complete (map1)
   (loop
-     for i from 0 to (- *tam-y* 1)
+     for linha in map1
      summing *square* into lim-y
      collect
        (loop
-	  for j from 0 to (- *tam-x* 1)
+	  for elemento in linha
 	  summing *square* into lim-x
-	  collect (make-instance 'cor-posicao :cor (aref map1 i j) :x lim-x :y lim-y) )
+	  collect (make-instance 'cor-posicao :cor elemento :x lim-x :y lim-y) )
     ))
 
+(defun draw-map (map1)
+  (let ((map1-completo (map-complete map1)))
+    (let ((height (* *tam-y* *square*))
+	  (width  (* *tam-x* *square*)))
+      (let ((result (make-8-bit-rgb-image height width)))
+	(loop
+	   for i from 0 to (- height 1)
+	   collect
+	     (loop
+		for j from 0 to (- width 1)
+		do (setf (pixel* result i j) (rgb->list (matrix->pixel map1-completo i j))) ))
+	(draw-circle* result 150 150 30 '(0 0 0))
+	(write-jpeg-file "maps/map.jpeg" result)
+	))
+    ))
+
+(defun matrix->pixel (map1 i j)
+  (car
+   (my-filter
+    #'(lambda(b) (not (equalp b nil)))
+    (flatten (map 'list
+		  #'(lambda(a) (map 'list
+				    #'(lambda(b)
+					(and (< j (lim-x b)) (< i (lim-y b)) (cor b))) a))
+		  map1))) ))
+
+(defun rgb->list (cor)
+  (list (r cor) (g cor) (b cor)))
+
+(defun flatten (ls)
+  (labels ((mklist (x) (if (listp x) x (list x))))
+        (mapcan #'(lambda (x) (if (atom x) (mklist x) (flatten x))) ls)))
+
+(defun my-filter  (f args)
+  (cond ((null args) nil)
+	((if (funcall f (car args))
+	     (cons (car args) (my-filter  f (cdr args)))
+	     (my-filter  f (cdr args)))))) 
