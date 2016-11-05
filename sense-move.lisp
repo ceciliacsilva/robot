@@ -3,21 +3,23 @@
 
 ;;File: sense-move.lisp
 
-(defparameter sensor-color 0.8)
-(defparameter sensor-move  0.8)
-
 (defun sense (p map1 sensor-read sensor-color)
     (let* ((color-sensor-right sensor-color)
-	   (color-sensor-wrong (- 1 color-sensor-right)))
+	   (color-sensor-wrong (/ color-sensor-right 3)))
       (loop
 	 for p-row     in p
 	 for color-row in map1
 	 collect
 	   (loop
-	      for p-i  in p-row
-	      for cor  in color-row
+	      for p-i   in p-row
+	      for cor-i in color-row
 	      collect
-		(let ((hit (if (equalp cor sensor-read) 1 0)))
+		(let ((hit (if
+			    (and
+			     (equalp (r cor-i) (r sensor-read))
+			     (equalp (g cor-i) (g sensor-read))
+			     (equalp (b cor-i) (b sensor-read)))
+			    1 0)))
 		  (* pi
 		     (+ (* hit       color-sensor-right)
 			(* (- 1 hit) color-sensor-wrong))))) into q
@@ -48,3 +50,9 @@
 (defun flatten (ls)
   (labels ((mklist (x) (if (listp x) x (list x))))
         (mapcan #'(lambda (x) (if (atom x) (mklist x) (flatten x))) ls)))
+
+(defun my-filter  (f args)
+  (cond ((null args) nil)
+	((if (funcall f (car args))
+	     (cons (car args) (my-filter  f (cdr args)))
+	     (my-filter  f (cdr args)))))) 

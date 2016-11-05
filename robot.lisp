@@ -10,6 +10,8 @@
 
 (in-package :robot)
 
+(load "sense-move.lisp")
+
 (defclass rgb ()
   ((r :accessor r :initarg :r)
    (g :accessor g :initarg :g)
@@ -33,6 +35,14 @@
 	(list amarelo amarelo verde azul)
 	(list verde vermelho amarelo verde)
 	(list azul verde vermelho azul)))
+(defvar *p*
+  (let* ((qndd (* *tam-x* *tam-y*))
+	 (p-i  (/ 1 qndd)))
+    (loop repeat *tam-y*
+       collect
+	 (loop repeat *tam-x*
+	    collect p-i)) ))
+(defvar *possible-move* '((1 0) (-1 0) (0 1) (0 -1)))
 
 (defun map-complete (map1)
   (loop
@@ -45,12 +55,10 @@
 	  collect (make-instance 'cor-posicao :cor elemento :x lim-x :y lim-y) )
     ))
 
-(defun draw-map (map1)
+(defun draw-map (map1 x y)
   (let ((map1-completo (map-complete map1)))
     (let* ((height (* *tam-y* *square*))
-	   (width  (* *tam-x* *square*))
-	   (x-init (random width))
-	   (y-init (random height)))
+	   (width  (* *tam-x* *square*)))
       (let ((result (make-8-bit-rgb-image height width)))
 	(loop
 	   for i below height
@@ -58,10 +66,54 @@
 	     (loop
 		for j below width 
 		do (setf (pixel* result i j) (rgb->list (matrix->pixel map1-completo i j))) ))
-	(fill-circle* result y-init x-init 30 '(0 0 0))
+	(fill-circle* result y x 30 '(0 0 0))
 	(write-jpeg-file "maps/map.jpeg" result)
 	))
     ))
+
+(defun draw-gradient (p)
+  (let ((p-position (map-complete p)))
+    (let* ((height (* *tam-y* *square*))
+	   (width  (* *tam-x* *square*)))
+      (let ((result (make-8-bit-rgb-image height width)))
+	(loop
+	   for i below height
+	   collect
+	     (loop
+		for j below width
+		do (setf (pixel* result i j) (p->rgb (matrix->pixel p-position i j))) ))
+	(write-jpeg-file "maps/gradient.jpeg" result)
+	))
+    ))
+
+(defun random-nth (lista)
+  (nth (random (list-length lista)) lista) )
+
+(defun localization (map1 p possible-move sensor-color sensor-move)
+  (let* ((height (* *tam-y* *square*))
+	 (width  (* *tam-x* *square*))
+	 (x (random width))
+	 (y (random height))
+	 (move-wrong (- 1 sensor-move))
+	 (q p))
+    (lambda()
+      (let* ((move (random-nth possible-move))
+	     (move-y (car move))
+	     (move-x (cadr move))
+	     (prob-move-wrong (if (zerop move-wrong) 0 (random move-wrong)))
+	     (move-final (+ sensor-move prob-move-wrong))
+	     (cor-read (sensor-read (map-complete map1) x y)))
+	;;(print (sensor-read (map-complete map1) x y))
+	(setf q (sense q map1 cor-read sensor-color))
+	(setf q (move q move sensor-move))
+	(setf x (rem (+ x (truncate (* move-final *square* move-x))) width))
+	(setf y (rem (+ y (truncate (* move-final *square* move-y))) height))
+	(draw-map map1 x y)
+	(draw-gradient q)
+	)) ))
+
+(defun sensor-read (map1 x y)
+  (matrix->pixel map1 x y))
 
 (defun matrix->pixel (map1 i j)
   (car
@@ -76,12 +128,6 @@
 (defun rgb->list (cor)
   (list (r cor) (g cor) (b cor)))
 
-(defun flatten (ls)
-  (labels ((mklist (x) (if (listp x) x (list x))))
-        (mapcan #'(lambda (x) (if (atom x) (mklist x) (flatten x))) ls)))
-
-(defun my-filter  (f args)
-  (cond ((null args) nil)
-	((if (funcall f (car args))
-	     (cons (car args) (my-filter  f (cdr args)))
-	     (my-filter  f (cdr args)))))) 
+(defun p->rgb (p-i)
+  (let ((value (truncate (* p-i 255))))
+    (list (- 255 value) 0 0)))
