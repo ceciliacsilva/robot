@@ -27,8 +27,8 @@
 (defparameter verde    (make-instance 'rgb :r 0   :g 100 :b 0))
 (defparameter vermelho (make-instance 'rgb :r 139 :g 0   :b 0))
 
-(defvar *tam-y*  4)
-(defvar *tam-x*  4)
+(defvar *tam-y*  3)
+(defvar *tam-x*  3)
 (defvar *square* 100)
 (defvar *map1*
   (list (list vermelho verde azul amarelo)
@@ -43,6 +43,16 @@
 	 (loop repeat *tam-x*
 	    collect p-i)) ))
 (defvar *possible-move* '((1 0) (-1 0) (0 1) (0 -1)))
+
+(defvar *map2*
+  (list (list verde verde verde)
+	(list verde vermelho verde)
+	(list verde verde verde)))
+(defvar *p2*
+  (let ((a (/ 1 9)))
+    (list (list a a a)
+	  (list a a a)
+	  (list a a a))))
 
 (defun map-complete (map1)
   (loop
@@ -103,15 +113,14 @@
 	     (prob-move-wrong (if (zerop move-wrong) 0 (random move-wrong)))
 	     (move-final (+ sensor-move prob-move-wrong))
 	     (cor-read (sensor-read (map-complete map1) x y)))
-	;;(print (sensor-read (map-complete map1) x y))
 	(setf q (sense q map1 cor-read sensor-color))
 	(setf q (move q move sensor-move))
-	(setf x (rem (+ x (truncate (* move-final *square* move-x))) width))
-	(setf y (rem (+ y (truncate (* move-final *square* move-y))) height))
+	(setf x (mod (+ x (truncate (* move-final *square* move-x))) width))
+	(setf y (mod (+ y (truncate (* move-final *square* move-y))) height))
 	(draw-map map1 x y)
 	(draw-gradient q)
 	)) ))
-
+  
 (defun sensor-read (map1 x y)
   (matrix->pixel map1 x y))
 

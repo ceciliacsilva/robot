@@ -20,7 +20,7 @@
 			     (equalp (g cor-i) (g sensor-read))
 			     (equalp (b cor-i) (b sensor-read)))
 			    1 0)))
-		  (* pi
+		  (* p-i
 		     (+ (* hit       color-sensor-right)
 			(* (- 1 hit) color-sensor-wrong))))) into q
 	 finally (return
@@ -30,20 +30,20 @@
 
 (defun move (p motion sensor-move)
   (let ((sensor-stay (- 1 sensor-move))
-	(m-hor       (car  motion))
-	(m-ver       (cadr motion))
+	(m-ver       (car  motion)) ;;y
+	(m-hor       (cadr motion)) ;;x
 	(tam-row     (list-length p))
 	(tam-col     (list-length (car p))))
     (loop
        for p-row in p
-       for i below tam-row
+       for i below tam-row ;;y
        collect
 	 (loop
 	    for p-ele in p-row
-	    for j below tam-col
+	    for j below tam-col ;;x
 	    collect
-	      (let* ((i-pos (mod (- i m-hor) tam-row))
-		     (j-pos (mod (- j m-ver) tam-col))
+	      (let* ((i-pos (mod (- i m-ver) tam-row))
+		     (j-pos (mod (- j m-hor) tam-col))
 		     (p-ij  (nth j-pos (nth i-pos p))))
 		(+ (* sensor-move p-ij) (* sensor-stay p-ele)))) )))
     
